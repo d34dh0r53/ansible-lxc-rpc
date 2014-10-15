@@ -39,8 +39,23 @@ for log in matches:
         print "$InputFileFacility local7"
         print "$InputRunFileMonitor\n"
 
-{% raw %}
-print r'''$template ls_json,"{%timestamp:::date-rfc3339,jsonf:@timestamp%,%source:::jsonf:@source_host%,\"@source\":\"syslog://%app-name:::json%\",\"@message\":\"%msg:::json%\",\"@fields\":{%syslogfacility-text:::jsonf:facility%,%syslogseverity-text:::jsonf:severity%,%app-name:::jsonf:program%,%procid:::jsonf:processid%}}"'''
-{% endraw %}
+print r'''template(name="ls_json"
+         type="list"
+         option.json="on") {
+           constant(value="{")
+             constant(value="\"@timestamp\":\"")         property(name="timereported" dateFormat="rfc3339")
+             constant(value="\",\"@version\":\"1")
+             constant(value="\",\"message\":\"")         property(name="msg")
+             constant(value="\",\"host\":\"")            property(name="hostname")
+             constant(value="\",\"source\":\"")          property(name="hostname")
+             constant(value="\",\"severity\":\"")        property(name="syslogseverity-text")
+             constant(value="\",\"facility\":\"")        property(name="syslogfacility-text")
+             constant(value="\",\"container\":\"")       property(name="programname")
+             constant(value="\",\"procid\":\"")          property(name="procid")
+             constant(value="\",\"program\":\"")         property(name="app-name")
+             constant(value="\",\"syslogtag\":\"")       property(name="syslogtag")
+             constant(value="\",\"structureddata\":\"")  property(name="structured-data")
+           constant(value="\"}\n")
+         }'''
 
 print "*.* @@{{ hostvars[groups['logstash'][0]]['container_address'] }}:{{ logstash_port }};ls_json"
